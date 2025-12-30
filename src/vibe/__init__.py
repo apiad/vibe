@@ -1,7 +1,7 @@
 from typing import Union, List
 from .style import Style
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 
 def grid(
