@@ -1,148 +1,187 @@
 import streamlit as st
 import vibe as vb
 
-# Define a custom style
-my_style = (
-    vb.Style(background_color="#f0f2f6", padding="20px",  border_radius="10px")
-    .select("h1", color="royalblue", text_align="center")
-    .select("p", font_size="18px", color="#333", text_align="center")
-)
+st.set_page_config(layout="wide")
 
-with my_style:
-    st.write("# Hello Vibe")
-    st.write("This paragraph and the header above are styled by the Style object.")
+# --- 1. THE BASICS: HELLO VIBE ---
+st.title("Vibe Demo Gallery ⚡️")
+st.write("Welcome to the new styling engine. No CSS files, just Python.")
 
-st.write("Back to normality here!")
+# Simple styling context
+with vb.Style(background_color="#f3f4f6", padding="20px", border_radius="12px"):
+    st.write("### 1. Basic Scoping")
+    st.write("I am inside a styled block (grey background).")
+    st.button("I am a standard button")
+
+# Proof of scoping
+st.write("I am outside the block (standard white background).")
 
 st.divider()
 
-# 1. Define a Theme
-slick_card = (
-    vb.Style(background_color="white",
-          border_radius="16px",
-          box_shadow="0 4px 12px rgba(0,0,0,0.05)",
-          padding="2rem")
-    .button(background_color="#1e293b", color="white", border_radius="20px")
-    .input(border="1px solid #e2e8f0", background_color="#f8fafc")
-    .header(font_family="Inter, sans-serif", color="#0f172a")
+# --- 2. COMPONENT TARGETING (THE "NEO-BRUTALISM" THEME) ---
+st.header("2. Component Targeting")
+
+brutalist_theme = (
+    vb.Style(
+        background_color="#ffde59",  # Bright Yellow Background
+        border="3px solid black",
+        box_shadow="8px 8px 0px black",
+        padding="2rem"
+    )
+    .header(font_family="Courier New, monospace", color="black")
+    .button(
+        background_color="white",
+        color="black",
+        border="2px solid black",
+        box_shadow="4px 4px 0px black",
+        font_weight="bold"
+    )
+    .input(border="2px solid black", border_radius="0px")
 )
 
-# 2. Use it
-with slick_card:
-    st.header("Login")
-    st.text_input("Email")
-    st.button("Continue")
+with brutalist_theme:
+    st.header("NEO-BRUTALISM")
+    st.write("We can target specific components like buttons and inputs easily.")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.text_input("Username", placeholder="user_01")
+    with col2:
+        st.button("SUBMIT ACTION", use_container_width=True)
 
-# 3. Verify Scoping (Standard elements outside remain untouched)
-st.button("I am standard grey")
+st.divider()
 
+# --- 3. LAYOUTS: GRID & FLEX ---
+st.header("3. Grid & Flex Layouts")
 
-# Define a layout where every nested container becomes a white card
-grid_layout = (
+# A responsive Bento-Box Grid
+# 1 column on mobile (implicit), 4 columns on desktop
+with vb.grid(cols=[1, 2, 1], gap="20px"):
+
+    # Left: Stats
+    with vb.Style(background_color="#e0f2fe", padding="20px", border_radius="16px"):
+        st.metric("Growth", "+12%", "High")
+        st.metric("Users", "1.2k", "+50")
+
+    # Center: Main Chart Area (Spans 2 columns defined in grid)
+    with vb.Style(background_color="#f0fdf4", padding="20px", border_radius="16px"):
+        st.subheader("Revenue Trajectory")
+        st.bar_chart([10, 25, 40, 30, 50, 60], height=200)
+
+    # Right: Actions (Flex Layout inside a Grid Cell)
+    with vb.Style(background_color="#fff1f2", padding="20px", border_radius="16px"):
+        st.write("**Quick Actions**")
+        # Nesting a Flex layout for buttons
+        with vb.flex(direction="column", gap="10px"):
+            st.button("🚀 Deploy")
+            st.button("💾 Save")
+            st.button("⚙️ Settings")
+
+st.divider()
+
+# --- 4. INTERACTIVITY: HOVER & ANIMATION ---
+st.header("4. 'Pop' Effects (Hover States)")
+
+# Define a "Glass" card with a hover effect
+glass_card = (
     vb.Style(
-        display="grid",
-        grid_template_columns="1fr 1fr",
-        gap="20px",
-        padding="20px",
-        # background_color="#f8fafc" # Light grey background for the whole area
+        background_color="rgba(255, 255, 255, 0.4)",
+        border="1px solid rgba(255, 255, 255, 0.2)",
+        box_shadow="0 4px 6px rgba(0,0,0,0.05)",
+        border_radius="16px",
+        padding="30px",
+        transition="transform 0.2s ease, box_shadow 0.2s ease" # Smooth animation
     )
+    .select(on="hover",
+            transform="translateY(-8px)",
+            box_shadow="0 20px 40px rgba(0,0,0,0.1)")
+)
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    with glass_card:
+        st.subheader("Hover Me!")
+        st.write("I lift up when you mouse over.")
+
+with col2:
+    with glass_card:
+        st.subheader("Me Too!")
+        st.write("Interactivity makes apps feel alive.")
+
+with col3:
+    with glass_card:
+        st.subheader("And Me!")
+        st.button("Click", key="glass_btn")
+
+st.divider()
+
+# --- 5. ADVANCED: THE "AUTO-CARD" DASHBOARD ---
+st.header("5. The 'Auto-Card' Dashboard")
+st.write("Style every nested container automatically using `.container()`.")
+
+# Create a master grid style that styles its children
+dashboard_style = (
+    vb.grid(cols=3, gap="20px")
     .container( # Target all nested st.container() blocks
         background_color="white",
         padding="20px",
         border_radius="12px",
-        box_shadow="0 4px 6px -1px rgba(0,0,0,0.1)",
+        box_shadow="0 2px 4px rgba(0,0,0,0.05)",
         border="1px solid #e2e8f0"
     )
-    .button(width="100%") # Make all buttons inside span full width
+    .header(font_family="Inter", font_size="16px", color="#64748b")
 )
 
-st.header("Dashboard Grid")
+with st.container():
+    st.caption("All boxes below are standard `st.container()`, automatically styled.")
 
-with grid_layout:
-    # This st.container automatically gets the card style!
-    with st.container():
-        st.subheader("Sales")
-        st.metric("Total", "$45,000")
-        st.button("View Details", key="b1")
+    with dashboard_style:
+        # Card 1
+        with st.container():
+            st.subheader("Active Sessions")
+            st.metric("Count", "432")
 
-    # So does this one
-    with st.container():
-        st.subheader("Traffic")
-        st.metric("Visitors", "1,200")
-        st.button("View Details", key="b2")
+        # Card 2
+        with st.container():
+            st.subheader("Server Load")
+            st.slider("CPU", 0, 100, 45)
 
-    # And this one...
-    with st.container():
-        st.subheader("Performance")
-        st.line_chart([1, 2, 3, 2, 4])
-
+        # Card 3
+        with st.container():
+            st.subheader("Messages")
+            st.text_input("Send broadcast", placeholder="Type here...")
 
 st.divider()
 
-# A 3-column grid where the middle column is wider (1fr 2fr 1fr)
-dashboard_grid = (
-    vb.grid(cols=[1, 2, 1], gap="20px")
-    .container( # Style every nested container as a card
-        background_color="white",
-        padding="20px",
-        border_radius="16px",
-        box_shadow="0 2px 5px rgba(0,0,0,0.05)"
-    )
-)
+# --- 6. ADVANCED: SLICK CHAT INTERFACE ---
+st.header("6. Complex Nesting: Slick Chat")
 
-with dashboard_grid:
-    # Column 1 (automatically placed)
-    with st.container():
-        st.subheader("Sidebar")
-        st.button("Home", use_container_width=True)
-        st.button("Settings", use_container_width=True)
-
-    # Column 2
-    with st.container():
-        st.subheader("Main Feed")
-        st.bar_chart([10, 20, 15, 25])
-
-    # Column 3
-    with st.container():
-        st.subheader("Stats")
-        st.metric("Users", "4.2k")
-
-
-# A flex row that spreads items apart
-navbar = (
-    vb.flex(justify="space-between", align="center", background_color="#f8fafc", padding="15px", border_radius="12px")
-    .button(background_color="transparent", color="#333", border="1px solid #ddd")
-)
-
-with navbar:
-    st.write("### 🚀 MyApp") # Left side
-
-    # Right side group
-    # We can nest another flex container here for the buttons!
-    with vb.flex(gap="10px"):
-        st.button("Login")
-        st.button("Sign Up")
-
-st.divider()
-
-# Create a card that lifts up when hovered
-interactive_card = (
+chat_layout = (
     vb.Style(
-        background_color="white",
-        padding="20px",
-        border_radius="12px",
-        box_shadow="0 4px 6px rgba(0,0,0,0.1)",
-        transition="transform 0.2s, box-shadow 0.2s" # Base state
+        max_width="700px",
+        margin="auto",
+        background_color="#ffffff",
+        padding="2rem",
+        border_radius="24px",
+        box_shadow="0 20px 50px -12px rgba(0,0,0,0.1)"
     )
-    .select(on="hover", # Applies to the container (&:hover)
-            transform="translateY(-5px)",
-            box_shadow="0 10px 20px rgba(0,0,0,0.15)")
-    .button(background_color="#333", color="white")
-    .button(on="hover", # Applies to the button inside (button:hover)
-            background_color="black",
-            transform="scale(1.05)")
+    # Style the chat bubbles specifically
+    .select("div[data-testid='stChatMessage']",
+            background_color="#f8fafc",
+            border_radius="16px",
+            border="1px solid #e2e8f0")
+    # Style user bubble differently using :nth-child or specific attributes if available
+    # For now, we style the input box
+    .select("div[data-testid='stChatInput']",
+            border_radius="20px")
 )
 
-with interactive_card:
-    st.write("### Hover me!")
-    st.button("Click")
+with chat_layout:
+    st.write("#### 🤖 AI Assistant")
+    st.caption("A narrow, focused chat interface.")
+
+    st.chat_message("assistant").write("Hello! I am styling this interface using Vibe.")
+    st.chat_message("user").write("It looks much cleaner than the default!")
+    st.chat_message("assistant").write("I know, right? No CSS files needed.")
+
+    st.chat_input("Type a message...")
