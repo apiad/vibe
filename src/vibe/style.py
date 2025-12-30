@@ -1,14 +1,12 @@
 from __future__ import annotations
 import uuid
-import textwrap
-from typing import Dict, Any, Optional, Union
-
-from streamlit.components.v2 import
+from typing import Dict, Any, Optional
+import streamlit as st
 
 
 class Style:
     """
-    A Streamlit-aware CSS engine.
+    A Streamlit-aware CSS engine using the ':has()' selector pattern.
     Allows defining scoped CSS rules that apply only within the context manager.
     """
 
@@ -17,10 +15,11 @@ class Style:
         # Store selectors and their corresponding rules
         # Format: { "selector": {"property": "value"} }
         self._selectors: Dict[str, Dict[str, str]] = {}
+        self._container = None
 
         # If rules are passed to the constructor, apply them to the root container
         if default_rules:
-            self.select("", **default_rules)
+            self.select("&", **default_rules)
 
     def _kebab(self, name: str) -> str:
         """Converts snake_case to kebab-case."""
@@ -29,50 +28,117 @@ class Style:
     def select(self, selector: str, **rules) -> Style:
         """
         Generic CSS selector.
-        The selector is automatically scoped to this Style instance's unique ID.
+        Use '&' or empty string to target the container itself.
         """
         clean_rules = {self._kebab(k): str(v) for k, v in rules.items()}
 
-        # Scope the selector. If selector is empty, it targets the wrapper div itself.
-        scoped_selector = f"#:has({self.id}) {selector}".strip()
+        # We store the raw selector here and scope it during generation
+        if selector == "" or selector is None:
+            selector = "&"
 
-        if scoped_selector not in self._selectors:
-            self._selectors[scoped_selector] = {}
+        if selector not in self._selectors:
+            self._selectors[selector] = {}
 
-        self._selectors[scoped_selector].update(clean_rules)
+        self._selectors[selector].update(clean_rules)
         return self
 
     def css(self) -> str:
-        """Generates the full CSS string for all registered selectors."""
+        """Generates the full scoped CSS string."""
+        # The magic selector: Finds the *innermost* Streamlit Vertical Block
+        # that contains our hidden marker
+
+        # NOTE: This will break when Streamlit changes
+        container_scope = (
+            f'div[data-testid="stVerticalBlock"]:'
+            f'has(> div > div > span#{self.id})'
+        )
+
         blocks = []
         for selector, rules in self._selectors.items():
             if not rules:
                 continue
 
-            # We use !important to ensure we override Streamlit's base styles
+            # 1. Format the rules
             rules_str = "\n".join(
                 [f"    {prop}: {val} !important;" for prop, val in rules.items()]
             )
-            blocks.append(f"{selector} {{\n{rules_str}\n}}")
+
+            # 2. Scope the selector
+            if selector == "&":
+                # Target the container itself
+                final_selector = container_scope
+            else:
+                # Target children inside the container
+                # We handle generic cases. If it's a direct child selector (e.g. > div), preserve it.
+                if selector.startswith("&"):
+                    # Handle pseudo-classes on the container (e.g. &:hover)
+                    final_selector = selector.replace("&", container_scope)
+                else:
+                    final_selector = f"{container_scope} {selector}"
+
+            blocks.append(f"{final_selector} {{\n{rules_str}\n}}")
 
         return "\n\n".join(blocks)
 
     def __enter__(self):
-        container = st.container()
+        # 1. Create the native Streamlit container
+        self._container = st.container()
 
-        # 1. Inject the generated CSS
+        # 2. Enter the container's context
+        self._container.__enter__()
+
+        # 3. Generate and inject CSS + Marker
         full_css = self.css()
 
-        container.markdown(f"<style>{full_css}</style>", unsafe_allow_html=True)
-        container.markdown(
-            f'<span id="{self.id}" class="vibe-container"></span>',
-            unsafe_allow_html=True,
+        # We inject the marker (span) and the style block.
+        # The :has() selector in CSS will find this span's parent.
+        self._container.html(
+            f"""
+            <style>{full_css}</style>
+            <span id="{self.id}" style="display:none;"></span>
+            """,
         )
 
-        return container.__enter__()
+        # 4. Return the container so users can add widgets to it
+        return self._container
 
-    def __exit__(self, *args, **kwargs):
-        pass
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # 5. Exit the native container's context
+        if self._container:
+            self._container.__exit__(exc_type, exc_val, exc_tb)
 
     def __repr__(self):
         return f"<Style id={self.id} selectors={list(self._selectors.keys())}>"
+
+    # --- STREAMLIT HELPERS ---
+    # These methods just map human-friendly names to Streamlit's internal CSS structure.
+
+    def button(self, **rules) -> Style:
+        """Styles st.button, st.download_button, st.form_submit_button."""
+        # Target the button element inside the stButton wrapper
+        return self.select('div[data-testid="stButton"] button', **rules)
+
+    def input(self, **rules) -> Style:
+        """Styles text_input, number_input, text_area (border/bg)."""
+        # Targets the input container (not the text itself)
+        return self.select('div[data-baseweb="input"]', **rules)
+
+    def slider(self, main_color=None, **rules) -> Style:
+        """Styles st.slider."""
+        if main_color:
+            rules.update({"color": main_color, "accent-color": main_color})
+            # Thumb and Track styling requires deeper selection which is hard to map generically,
+            # but we can apply basic colors to the wrapper.
+        return self.select('div[data-testid="stSlider"]', **rules)
+
+    def metric(self, **rules) -> Style:
+        """Styles st.metric container."""
+        return self.select('div[data-testid="stMetric"]', **rules)
+
+    def header(self, **rules) -> Style:
+        """Styles h1, h2, h3 tags."""
+        return self.select('h1, h2, h3', **rules)
+
+    def text(self, **rules) -> Style:
+        """Styles p (standard text) tags."""
+        return self.select('p', **rules)
