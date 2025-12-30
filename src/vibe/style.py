@@ -142,3 +142,21 @@ class Style:
     def text(self, **rules) -> Style:
         """Styles p (standard text) tags."""
         return self.select('p', **rules)
+
+    def container(self, **rules) -> Style:
+        """
+        Styles nested st.container() blocks.
+        Useful for making a 'grid of cards' layout.
+        """
+        return self.select('div[data-testid="stVerticalBlock"]', **rules)
+
+    def column(self, **rules) -> Style:
+        """
+        Styles st.column() wrappers.
+        Note: Columns often contain a vertical block inside them.
+        """
+        return self.select('div[data-testid="stColumn"]', **rules)
+
+    def expander(self, **rules) -> Style:
+        """Styles st.expander() container."""
+        return self.select('div[data-testid="stExpander"]', **rules)

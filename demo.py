@@ -35,3 +35,46 @@ with slick_card:
 
 # 3. Verify Scoping (Standard elements outside remain untouched)
 st.button("I am standard grey")
+
+
+import streamlit as st
+from vibe.style import Style
+
+# Define a layout where every nested container becomes a white card
+grid_layout = (
+    Style(
+        display="grid",
+        grid_template_columns="1fr 1fr",
+        gap="20px",
+        padding="20px",
+        # background_color="#f8fafc" # Light grey background for the whole area
+    )
+    .container( # Target all nested st.container() blocks
+        background_color="white",
+        padding="20px",
+        border_radius="12px",
+        box_shadow="0 4px 6px -1px rgba(0,0,0,0.1)",
+        border="1px solid #e2e8f0"
+    )
+    .button(width="100%") # Make all buttons inside span full width
+)
+
+st.header("Dashboard Grid")
+
+with grid_layout:
+    # This st.container automatically gets the card style!
+    with st.container():
+        st.subheader("Sales")
+        st.metric("Total", "$45,000")
+        st.button("View Details", key="b1")
+
+    # So does this one
+    with st.container():
+        st.subheader("Traffic")
+        st.metric("Visitors", "1,200")
+        st.button("View Details", key="b2")
+
+    # And this one...
+    with st.container():
+        st.subheader("Performance")
+        st.line_chart([1, 2, 3, 2, 4])
