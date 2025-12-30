@@ -14,6 +14,8 @@ with vb.grid(cols=2, gap="2rem"):
         st.metric("Revenue", "$42,000", "+12%")
 ```
 
+> [Check out the online demo!](https://st-vibe.streamlit.app/)
+
 ## Why Vibe?
 
 Streamlit is great for data, but styling it often involves brittle `st.markdown` hacks that break easily and leak styles globally.
