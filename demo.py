@@ -37,12 +37,9 @@ with slick_card:
 st.button("I am standard grey")
 
 
-import streamlit as st
-from vibe.style import Style
-
 # Define a layout where every nested container becomes a white card
 grid_layout = (
-    Style(
+    vb.Style(
         display="grid",
         grid_template_columns="1fr 1fr",
         gap="20px",
@@ -125,3 +122,27 @@ with navbar:
     with vb.flex(gap="10px"):
         st.button("Login")
         st.button("Sign Up")
+
+st.divider()
+
+# Create a card that lifts up when hovered
+interactive_card = (
+    vb.Style(
+        background_color="white",
+        padding="20px",
+        border_radius="12px",
+        box_shadow="0 4px 6px rgba(0,0,0,0.1)",
+        transition="transform 0.2s, box-shadow 0.2s" # Base state
+    )
+    .select(on="hover", # Applies to the container (&:hover)
+            transform="translateY(-5px)",
+            box_shadow="0 10px 20px rgba(0,0,0,0.15)")
+    .button(background_color="#333", color="white")
+    .button(on="hover", # Applies to the button inside (button:hover)
+            background_color="black",
+            transform="scale(1.05)")
+)
+
+with interactive_card:
+    st.write("### Hover me!")
+    st.button("Click")

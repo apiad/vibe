@@ -25,15 +25,29 @@ class Style:
         """Converts snake_case to kebab-case."""
         return name.replace("_", "-")
 
-    def select(self, selector: str, **rules) -> Style:
+    def select(self, selector: str | None = None, on: str | None = None, **rules) -> Style:
         """
         Generic CSS selector.
-        Use '&' or empty string to target the container itself.
+
+        Args:
+            selector: The CSS selector (e.g. 'div', 'p'). Defaults to '&' (the container).
+            on: Pseudo-class to apply (e.g. 'hover', 'active', 'focus').
+            **rules: CSS properties (snake_case handled automatically).
         """
         clean_rules = {self._kebab(k): str(v) for k, v in rules.items()}
 
-        # We store the raw selector here and scope it during generation
-        if selector == "" or selector is None:
+        # Default to root if no selector provided
+        if selector is None:
+            selector = ""
+
+        # If 'on' is provided, we need to append the pseudo-class.
+        # If the selector implies the root ('&' or empty), we must ensure '&' is explicit.
+        if on:
+            base = selector if selector else "&"
+            selector = f"{base}:{on}"
+
+        # Final fallback for bare root selector
+        if selector == "":
             selector = "&"
 
         if selector not in self._selectors:
