@@ -78,3 +78,50 @@ with grid_layout:
     with st.container():
         st.subheader("Performance")
         st.line_chart([1, 2, 3, 2, 4])
+
+
+st.divider()
+
+# A 3-column grid where the middle column is wider (1fr 2fr 1fr)
+dashboard_grid = (
+    vb.grid(cols=[1, 2, 1], gap="20px")
+    .container( # Style every nested container as a card
+        background_color="white",
+        padding="20px",
+        border_radius="16px",
+        box_shadow="0 2px 5px rgba(0,0,0,0.05)"
+    )
+)
+
+with dashboard_grid:
+    # Column 1 (automatically placed)
+    with st.container():
+        st.subheader("Sidebar")
+        st.button("Home", use_container_width=True)
+        st.button("Settings", use_container_width=True)
+
+    # Column 2
+    with st.container():
+        st.subheader("Main Feed")
+        st.bar_chart([10, 20, 15, 25])
+
+    # Column 3
+    with st.container():
+        st.subheader("Stats")
+        st.metric("Users", "4.2k")
+
+
+# A flex row that spreads items apart
+navbar = (
+    vb.flex(justify="space-between", align="center", background_color="#f8fafc", padding="15px", border_radius="12px")
+    .button(background_color="transparent", color="#333", border="1px solid #ddd")
+)
+
+with navbar:
+    st.write("### 🚀 MyApp") # Left side
+
+    # Right side group
+    # We can nest another flex container here for the buttons!
+    with vb.flex(gap="10px"):
+        st.button("Login")
+        st.button("Sign Up")

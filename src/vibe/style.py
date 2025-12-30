@@ -54,6 +54,11 @@ class Style:
         )
 
         blocks = []
+
+        blocks.append(
+            f'{container_scope} > div:has(span#{self.id}) {{ display: none !important; }}'
+        )
+
         for selector, rules in self._selectors.items():
             if not rules:
                 continue
